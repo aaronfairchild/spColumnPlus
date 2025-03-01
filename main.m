@@ -17,7 +17,8 @@ theta = deg2rad(45);
 drawSection(section, reinforcement);
 
 % find correct Pn
-c = 30;
-Pn = findPn(section, materials, reinforcement);
+Pn = findPn(section, materials, reinforcement, analysis);
 
-maxy =
+
+
+
