@@ -22,6 +22,3 @@ Pn = findPn(section, materials, reinforcement);
 
 
 maxy =
-
-boo
-
