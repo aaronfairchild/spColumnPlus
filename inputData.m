@@ -151,6 +151,8 @@ analysis.P = 20000;             % Axial load P (kips, compression positive)
 analysis.start_angle = 0;       % Start angle for rotation (degrees)
 analysis.end_angle = 360;       % End angle for rotation (degrees)
 analysis.angle_increment = 45;  % Angle increment (degrees)
+analysis.start_c = -20;
+analysis.end_c = 300;
 
 %% Display summary of inputs (DO NOT MODIFY THIS SECTION)
 display_summary(section, materials, reinforcement, analysis);
