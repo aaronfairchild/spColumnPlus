@@ -5,8 +5,6 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 
 [section, materials, reinforcement, analysis] = inputData();
 
-drawSection(section, reinforcement);
-
 [xpc,ypc] = findCentroid(section, materials, reinforcement);
 section.centroid = [xpc,ypc];
 

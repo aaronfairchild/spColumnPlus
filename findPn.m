@@ -46,7 +46,7 @@ while err > tolP && num_iterations < max_iterations
     end
     
     % Finite difference approximation for derivative
-    delta = 1e-6;
+    delta = 1e-3;
     c_plus_delta = c + delta; % Ensure this is a scalar
     [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
     f_prime = (Pn_delta - Pn) / delta;
@@ -86,6 +86,8 @@ function [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c)
     fy = materials.fy;
     Es = materials.Es;
     epsilon_cu = materials.epsilon_cu;
+
+    y_max = max(section.vertices(:,2));
     
     % Get concrete polygons in compression for current c
     polys = findPolys(section, c);
@@ -109,16 +111,18 @@ function [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c)
     Pns = 0;
     for i = 1:length(reinforcement.x)
         % Get coordinates of reinforcement bar
+        
         y_bar = reinforcement.y(i);
+        d = y_max-y_bar;
         
         % Check if bar is in compression or tension
-        if y_bar >= c
+        if d <= c
             % Bar is in compression
-            strain = epsilon_cu * (y_bar - c) / (max(section.vertices(:,2)) - c);
+            strain = epsilon_cu * (d - c) / (c);
             stress = min(strain * Es, fy);
         else
             % Bar is in tension
-            strain = epsilon_cu * (c - y_bar) / c;
+            strain = epsilon_cu * (c - d) / d;
             stress = max(-strain * Es, -fy);
         end
         
