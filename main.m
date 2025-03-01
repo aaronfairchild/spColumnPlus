@@ -20,5 +20,4 @@ drawSection(section, reinforcement);
 c = 30;
 Pn = findPn(section, materials, reinforcement);
 
-
 maxy =
