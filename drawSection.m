@@ -53,16 +53,12 @@ end
 axis equal;
 
 % Add title and labels
-title('Reinforced Concrete Section', 'FontSize', 14);
 xlabel('X (in)', 'FontSize', 12);
 ylabel('Y (in)', 'FontSize', 12);
 
 % Add grid and set axis properties
 grid on;
 box on;
-
-% Add legend
-legend('Concrete', 'Reinforcement', 'Location', 'best');
 
 % Determine appropriate axes limits with some margin
 x_min = min(section.vertices(:,1)) - 10;
@@ -72,10 +68,9 @@ y_max = max(section.vertices(:,2)) + 10;
 
 % Set axis limits
 axis([x_min x_max y_min y_max]);
+if ~isempty(section.centroid)
+    pc = section.centroid;
+    plot(pc(1),pc(2),'ko','MarkerFaceColor','k');
+end
 
-% Add text showing total number of bars
-text(x_min + 5, y_min + 5, sprintf('Total bars: %d', length(reinforcement.x)), ...
-    'FontSize', 10, 'BackgroundColor', 'w', 'EdgeColor', 'k', 'Margin', 3);
-
-hold off;
 end

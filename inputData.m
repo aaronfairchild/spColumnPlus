@@ -27,26 +27,30 @@ section.vertices = [
 
 %% SECTION 2: MATERIAL PROPERTIES
 % Concrete properties
-materials.fc_prime = 9;      % Concrete compressive strength (ksi)
+materials.fc = 9;      % Concrete compressive strength (ksi)
 materials.epsilon_cu = 0.003;   % Concrete ultimate strain (in/in)
 
 % Steel properties
 materials.fy = 60;           % Steel yield strength (ksi)
 materials.Es = 29000;        % Steel elastic modulus (ksi)
 materials.cover = 2.500;        % Concrete cover (in) to center of bars
+materials.eps_y = materials.fy/materials.Es;
 
 % Beta1 coefficient for equivalent rectangular stress block
 % ACI 318 values are calculated below, but can be overridden
-if materials.fc_prime <= 4
+if materials.fc <= 4
     materials.beta1 = 0.85;
-elseif materials.fc_prime >= 8
+elseif materials.fc >= 8
     materials.beta1 = 0.65;
 else
-    materials.beta1 = 0.85 - 0.05 * (materials.fc_prime - 4); % unsure
+    materials.beta1 = 0.85 - 0.05 * (materials.fc - 4); % unsure
 end
 
 % Uncomment to override beta1 with custom value
 % materials.beta1 = 0.75;
+
+% Initialize plastic centroid
+section.centroid = [];
 
 %% SECTION 3: REINFORCEMENT DEFINITION
 % Define reinforcement as lines with evenly spaced bars
@@ -163,7 +167,7 @@ fprintf('Concrete Section: Polygon with %d vertices\n', size(section.vertices, 1
 
 % Material properties summary
 fprintf('\nMaterial Properties:\n');
-fprintf('  Concrete strength (f''c): %.0f psi\n', materials.fc_prime);
+fprintf('  Concrete strength (f''c): %.0f psi\n', materials.fc);
 fprintf('  Ultimate strain: %.5f in/in\n', materials.epsilon_cu);
 fprintf('  Steel yield strength (fy): %.0f psi\n', materials.fy);
 fprintf('  Steel elastic modulus (Es): %.0f psi\n', materials.Es);
