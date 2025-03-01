@@ -1,4 +1,4 @@
-function [Pn, Pnc, Pns] = findPn(section, materials, reinforcement, analysis)
+function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 % FINDPN - Calculates axial capacity of reinforced concrete section
 % and iterates to find neutral axis depth for target axial load
 %
@@ -26,11 +26,67 @@ tolP = analysis.P_tolerance;
 
 % Initialize variables for iteration
 err = 1.0;  % Initial error
-max_iterations = 100;  % Prevent infinite loop
+max_iterations = 1000;  % Prevent infinite loop
 num_iterations = 0;
 
 % Iterate to find c that gives Pn close to Pn_target
 while err > tolP && num_iterations < max_iterations
+    % Calculate current axial capacity for the current value of c
+    [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
+    
+    % Define the residual function f(c) = Pn(c) - Pn_target
+    f_val = Pn - Pn_target;
+    
+    % Calculate relative error
+    err = abs(f_val / Pn_target);
+    
+    % If we're close enough, exit the loop
+    if err <= tolP
+        break;
+    end
+    
+    % Finite difference approximation for derivative
+    delta = 1e-6;
+    c_plus_delta = c + delta; % Ensure this is a scalar
+    [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
+    f_prime = (Pn_delta - Pn) / delta;
+    
+    % Newton-Raphson update
+    % Check if derivative is too small to avoid division by zero
+    if abs(f_prime) < 1e-8
+        % Fallback to simple proportional update if derivative is too small
+        c_new = c * (Pn_target / max(abs(Pn), 1e-8));
+    else
+        c_new = c - f_val / f_prime;
+    end
+    
+    % Ensure c stays within reasonable bounds
+    c_new = max(c_new, -max(abs(section.vertices(:,2)))); % Lower bound
+    c_new = min(c_new, 2*max(section.vertices(:,2))); % Upper bound
+    
+    % Ensure c is a scalar (take first element if somehow became an array)
+    c = c_new(1);
+    
+    % Increment iteration counter
+    num_iterations = num_iterations + 1;
+end
+
+% If failed to converge, display warning
+if num_iterations >= max_iterations
+    warning('Failed to converge to target axial load within %d iterations.', max_iterations);
+end
+
+end
+
+function [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c)
+% Helper function to compute axial capacity for a given neutral axis depth c
+    
+    % Extract material properties
+    fc = materials.fc;
+    fy = materials.fy;
+    Es = materials.Es;
+    epsilon_cu = materials.epsilon_cu;
+    
     % Get concrete polygons in compression for current c
     polys = findPolys(section, c);
     
@@ -70,22 +126,11 @@ while err > tolP && num_iterations < max_iterations
         Pns = Pns + stress * reinforcement.area(i);
     end
     
-    % Total axial capacity
+    % Total axial capacity (ensure it's a scalar)
     Pn = Pnc + Pns;
     
-    % Calculate error
-    err = abs(Pn - Pn_target) / Pn_target;
-    
-    % Update c based on error
-    c = c * (Pn_target / Pn);
-    
-    % Increment iteration counter
-    num_iterations = num_iterations + 1;
-end
-
-% If failed to converge, display warning
-if num_iterations >= max_iterations
-    warning('Failed to converge to target axial load within %d iterations.', max_iterations);
-end
-
+    % Ensure all outputs are scalar
+    Pn = Pn(1);
+    Pnc = Pnc(1);
+    Pns = Pns(1);
 end

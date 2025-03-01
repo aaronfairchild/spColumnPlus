@@ -17,8 +17,9 @@ theta = deg2rad(45);
 drawSection(section, reinforcement);
 
 % find correct Pn
-Pn = findPn(section, materials, reinforcement, analysis);
+[Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
 
-
+Pn
+c
 
 
