@@ -26,7 +26,7 @@ tolP = analysis.P_tolerance;
 
 % Initialize variables for iteration
 err = 1.0;  % Initial error
-max_iterations = 100;  % Prevent infinite loop
+max_iterations = 10000;  % Prevent infinite loop
 num_iterations = 0;
 
 % Iterate to find c that gives Pn close to Pn_target
@@ -91,8 +91,6 @@ fy = materials.fy;
 Es = materials.Es;
 epsilon_cu = materials.epsilon_cu;
 
-y_max = max(section.vertices(:,2));
-
 % Get concrete polygons in compression for current c
 polys = findPolys(section, c);
 
@@ -103,8 +101,9 @@ if ~isempty(polys)
         % Create a polyshape from the polygon vertices
         compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
 
-        % Calculate area of the polygon
-        CArea = section.Ag - area(compPoly);
+        % Calculate area of the polygon - THIS WAS INCORRECT
+        % CArea = section.Ag - area(compPoly); 
+        CArea = area(compPoly); % Fix: Use actual compression area
 
         % Add contribution to concrete axial capacity
         Pnc = Pnc + 0.85 * fc * CArea;
@@ -115,11 +114,13 @@ end
 Pns = 0;
 for i = 1:length(reinforcement.x)
     % Get coordinates of reinforcement bar
-
     y_bar = reinforcement.y(i);
-    d = y_max-y_bar;
-
-    strain = epsilon_cu * (d - c) / (c);
+    
+    % Calculate strain in steel - THIS WAS INCORRECT
+    % strain = epsilon_cu * (d - c) / (c);
+    strain = epsilon_cu * (c - y_bar) / c; % Fix: Proper strain calculation
+    
+    % Calculate stress (limited by yield)
     stress = min(max(strain * Es, -fy), fy);
 
     % Add contribution to steel axial capacity

@@ -9,7 +9,7 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 section.centroid = [xpc,ypc];
 
 
-theta = deg2rad(30);
+theta = deg2rad(0);
 
 [section,reinforcement] = rotateSection(theta, section, reinforcement);
 drawSection(section, reinforcement);
