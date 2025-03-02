@@ -25,6 +25,8 @@ section.vertices = [
     20, 20;
 ];
 
+section.Ag = [];
+
 %% SECTION 2: MATERIAL PROPERTIES
 % Concrete properties
 materials.fc = 9;      % Concrete compressive strength (ksi)
@@ -151,7 +153,7 @@ analysis.P = 20000;             % Axial load P (kips, compression positive)
 analysis.start_angle = 0;       % Start angle for rotation (degrees)
 analysis.end_angle = 360;       % End angle for rotation (degrees)
 analysis.angle_increment = 45;  % Angle increment (degrees)
-analysis.start_c = -20;
+analysis.start_c = 0;
 analysis.end_c = 300;
 analysis.P_tolerance = 1e-3;
 

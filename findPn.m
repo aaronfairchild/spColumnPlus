@@ -26,7 +26,7 @@ tolP = analysis.P_tolerance;
 
 % Initialize variables for iteration
 err = 1.0;  % Initial error
-max_iterations = 1000;  % Prevent infinite loop
+max_iterations = 100;  % Prevent infinite loop
 num_iterations = 0;
 
 % Iterate to find c that gives Pn close to Pn_target
@@ -46,7 +46,7 @@ while err > tolP && num_iterations < max_iterations
     end
     
     % Finite difference approximation for derivative
-    delta = 1e-3;
+    delta = 1e-8;
     c_plus_delta = c + delta; % Ensure this is a scalar
     [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
     f_prime = (Pn_delta - Pn) / delta;
@@ -57,18 +57,18 @@ while err > tolP && num_iterations < max_iterations
         % Fallback to simple proportional update if derivative is too small
         c_new = c * (Pn_target / max(abs(Pn), 1e-8));
     else
-        c_new = c - f_val / f_prime;
+        c_new = c + f_val / f_prime;
     end
-    
-    % Ensure c stays within reasonable bounds
-    c_new = max(c_new, -max(abs(section.vertices(:,2)))); % Lower bound
-    c_new = min(c_new, 2*max(section.vertices(:,2))); % Upper bound
     
     % Ensure c is a scalar (take first element if somehow became an array)
     c = c_new(1);
     
     % Increment iteration counter
     num_iterations = num_iterations + 1;
+    fprintf('Pn: %6.3f\n',Pn);
+    fprintf('c: %6.3f\n',c);
+    fprintf('err: %6.3f\n',err);
+
 end
 
 % If failed to converge, display warning
