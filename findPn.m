@@ -13,12 +13,6 @@ function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 %   Pnc - Concrete contribution to axial capacity (kips)
 %   Pns - Steel contribution to axial capacity (kips)
 
-% Extract material properties
-fc = materials.fc;                % Concrete compressive strength (ksi)
-fy = materials.fy;                % Steel yield strength (ksi)
-Es = materials.Es;                % Steel elastic modulus (ksi)
-epsilon_cu = materials.epsilon_cu;  % Ultimate concrete strain
-
 % Get initial guess for c, target load, and tolerance
 c = analysis.start_c;
 Pn_target = analysis.P;
@@ -69,10 +63,6 @@ while err > tolP && num_iterations < max_iterations
 
     % Increment iteration counter
     num_iterations = num_iterations + 1;
-    fprintf('Pn: %6.3f\n',Pn);
-    fprintf('c: %6.3f\n',c);
-    fprintf('err: %6.3f\n',err);
-
 end
 
 % If failed to converge, display warning
@@ -102,7 +92,7 @@ if ~isempty(polys)
         compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
 
         % Calculate area of the polygon - THIS WAS INCORRECT
-        % CArea = section.Ag - area(compPoly); 
+        % CArea = section.Ag - area(compPoly);
         CArea = area(compPoly); % Fix: Use actual compression area
 
         % Add contribution to concrete axial capacity
@@ -111,27 +101,26 @@ if ~isempty(polys)
 end
 
 % Calculate steel contribution to axial capacity
-Pns = 0;
+Pns = zeros(length(reinforcement.x),1);
 for i = 1:length(reinforcement.x)
     % Get coordinates of reinforcement bar
     y_bar = reinforcement.y(i);
-    
+
     % Calculate strain in steel - THIS WAS INCORRECT
     % strain = epsilon_cu * (d - c) / (c);
     strain = epsilon_cu * (c - y_bar) / c; % Fix: Proper strain calculation
-    
+
     % Calculate stress (limited by yield)
     stress = min(max(strain * Es, -fy), fy);
 
     % Add contribution to steel axial capacity
-    Pns = Pns + stress * reinforcement.area(i);
+    Pns(i) = stress * reinforcement.area(i,1);
 end
 
 % Total axial capacity (ensure it's a scalar)
-Pn = Pnc + Pns;
+Pn = Pnc + sum(Pns);
 
 % Ensure all outputs are scalar
 Pn = Pn(1);
 Pnc = Pnc(1);
-Pns = Pns(1);
 end
