@@ -5,19 +5,14 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 
 [section, materials, reinforcement, analysis] = inputData();
 
-[xpc,ypc] = findCentroid(section, materials, reinforcement);
+[xpc,ypc,section] = findCentroid(section, materials, reinforcement);
 section.centroid = [xpc,ypc];
 
 
-theta = deg2rad(45);
+theta = deg2rad(30);
 
 [section,reinforcement] = rotateSection(theta, section, reinforcement);
 drawSection(section, reinforcement);
 
 % find correct Pn
 [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
-
-Pn
-c
-
-

@@ -33,36 +33,40 @@ num_iterations = 0;
 while err > tolP && num_iterations < max_iterations
     % Calculate current axial capacity for the current value of c
     [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
-    
+
     % Define the residual function f(c) = Pn(c) - Pn_target
     f_val = Pn - Pn_target;
-    
+
     % Calculate relative error
     err = abs(f_val / Pn_target);
-    
+
     % If we're close enough, exit the loop
     if err <= tolP
         break;
     end
-    
+
     % Finite difference approximation for derivative
     delta = 1e-8;
     c_plus_delta = c + delta; % Ensure this is a scalar
     [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
     f_prime = (Pn_delta - Pn) / delta;
-    
+
     % Newton-Raphson update
     % Check if derivative is too small to avoid division by zero
     if abs(f_prime) < 1e-8
         % Fallback to simple proportional update if derivative is too small
         c_new = c * (Pn_target / max(abs(Pn), 1e-8));
     else
-        c_new = c + f_val / f_prime;
+        c_new = c - f_val / f_prime;
     end
-    
+
+    % Ensure c stays within reasonable bounds
+    c_new = max(c_new, -max(abs(section.vertices(:,2)))); % Lower bound
+    c_new = min(c_new, 2*max(section.vertices(:,2))); % Upper bound
+
     % Ensure c is a scalar (take first element if somehow became an array)
     c = c_new(1);
-    
+
     % Increment iteration counter
     num_iterations = num_iterations + 1;
     fprintf('Pn: %6.3f\n',Pn);
@@ -80,61 +84,53 @@ end
 
 function [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c)
 % Helper function to compute axial capacity for a given neutral axis depth c
-    
-    % Extract material properties
-    fc = materials.fc;
-    fy = materials.fy;
-    Es = materials.Es;
-    epsilon_cu = materials.epsilon_cu;
 
-    y_max = max(section.vertices(:,2));
-    
-    % Get concrete polygons in compression for current c
-    polys = findPolys(section, c);
-    
-    % Calculate concrete contribution to axial capacity
-    Pnc = 0;
-    if ~isempty(polys)
-        for i = 1:length(polys)
-            % Create a polyshape from the polygon vertices
-            compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
-            
-            % Calculate area of the polygon
-            CArea = area(compPoly);
-            
-            % Add contribution to concrete axial capacity
-            Pnc = Pnc + 0.85 * fc * CArea;
-        end
+% Extract material properties
+fc = materials.fc;
+fy = materials.fy;
+Es = materials.Es;
+epsilon_cu = materials.epsilon_cu;
+
+y_max = max(section.vertices(:,2));
+
+% Get concrete polygons in compression for current c
+polys = findPolys(section, c);
+
+% Calculate concrete contribution to axial capacity
+Pnc = 0;
+if ~isempty(polys)
+    for i = 1:length(polys)
+        % Create a polyshape from the polygon vertices
+        compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
+
+        % Calculate area of the polygon
+        CArea = section.Ag - area(compPoly);
+
+        % Add contribution to concrete axial capacity
+        Pnc = Pnc + 0.85 * fc * CArea;
     end
-    
-    % Calculate steel contribution to axial capacity
-    Pns = 0;
-    for i = 1:length(reinforcement.x)
-        % Get coordinates of reinforcement bar
-        
-        y_bar = reinforcement.y(i);
-        d = y_max-y_bar;
-        
-        % Check if bar is in compression or tension
-        if d <= c
-            % Bar is in compression
-            strain = epsilon_cu * (d - c) / (c);
-            stress = min(strain * Es, fy);
-        else
-            % Bar is in tension
-            strain = epsilon_cu * (c - d) / d;
-            stress = max(-strain * Es, -fy);
-        end
-        
-        % Add contribution to steel axial capacity
-        Pns = Pns + stress * reinforcement.area(i);
-    end
-    
-    % Total axial capacity (ensure it's a scalar)
-    Pn = Pnc + Pns;
-    
-    % Ensure all outputs are scalar
-    Pn = Pn(1);
-    Pnc = Pnc(1);
-    Pns = Pns(1);
+end
+
+% Calculate steel contribution to axial capacity
+Pns = 0;
+for i = 1:length(reinforcement.x)
+    % Get coordinates of reinforcement bar
+
+    y_bar = reinforcement.y(i);
+    d = y_max-y_bar;
+
+    strain = epsilon_cu * (d - c) / (c);
+    stress = min(max(strain * Es, -fy), fy);
+
+    % Add contribution to steel axial capacity
+    Pns = Pns + stress * reinforcement.area(i);
+end
+
+% Total axial capacity (ensure it's a scalar)
+Pn = Pnc + Pns;
+
+% Ensure all outputs are scalar
+Pn = Pn(1);
+Pnc = Pnc(1);
+Pns = Pns(1);
 end

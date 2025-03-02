@@ -1,4 +1,4 @@
-function [section,reinforcement] = rotateSection(theta, section, reinforcement);
+function [section,reinforcement] = rotateSection(theta, section, reinforcement)
 
 vertices = section.vertices; % for concrete
 reinf = [reinforcement.x, reinforcement.y];

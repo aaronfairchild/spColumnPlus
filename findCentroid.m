@@ -1,4 +1,4 @@
-function [xpc,ypc] = findCentroid(section, materials, reinforcement);
+function [xpc,ypc,section] = findCentroid(section, materials, reinforcement)
 
 vertices = section.vertices; % for concrete
 xreinf = reinforcement.x;
