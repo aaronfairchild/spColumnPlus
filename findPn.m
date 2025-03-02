@@ -15,7 +15,7 @@ function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 
 % Get initial guess for c, target load, and tolerance
 c = analysis.start_c;
-c_range = -300:0.1:500;
+c_range = -100:0.1:250;
 nC = length(c_range);
 Pn_target = analysis.P;
 tolP = analysis.P_tolerance;
@@ -73,7 +73,7 @@ end
 
 % If failed to converge, display warning
 if num_iterations >= max_iterations
-    warning('Failed to converge to target axial load within %d iterations.', max_iterations);
+    %warning('Failed to converge to target axial load within %d iterations.', max_iterations);
 end
 
 end
