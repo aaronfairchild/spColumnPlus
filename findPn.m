@@ -15,6 +15,8 @@ function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 
 % Get initial guess for c, target load, and tolerance
 c = analysis.start_c;
+c_range = -300:0.1:500;
+nC = length(c_range);
 Pn_target = analysis.P;
 tolP = analysis.P_tolerance;
 
@@ -24,8 +26,9 @@ max_iterations = 10000;  % Prevent infinite loop
 num_iterations = 0;
 
 % Iterate to find c that gives Pn close to Pn_target
-while err > tolP && num_iterations < max_iterations
+for j = 1:nC
     % Calculate current axial capacity for the current value of c
+    c = c_range(j);
     [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
 
     % Define the residual function f(c) = Pn(c) - Pn_target
@@ -33,6 +36,7 @@ while err > tolP && num_iterations < max_iterations
 
     % Calculate relative error
     err = abs(f_val / Pn_target);
+    fprintf('j:    %i, err = %5.6f\n',j,err);
 
     % If we're close enough, exit the loop
     if err <= tolP
@@ -64,6 +68,8 @@ while err > tolP && num_iterations < max_iterations
     % Increment iteration counter
     num_iterations = num_iterations + 1;
 end
+
+
 
 % If failed to converge, display warning
 if num_iterations >= max_iterations

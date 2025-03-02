@@ -9,10 +9,12 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 section.centroid = [xpc,ypc];
 
 
-theta = deg2rad(0);
+theta = deg2rad(45);
 
 [section,reinforcement] = rotateSection(theta, section, reinforcement);
-drawSection(section, reinforcement);
+
 
 % find correct Pn
 [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
+polys = findPolys(section, c);
+drawSection(section, reinforcement, c, polys)
