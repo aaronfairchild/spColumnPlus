@@ -16,3 +16,6 @@ drawSection(section, reinforcement);
 
 % find correct Pn
 [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
+
+% find moments
+[Mnx,Mny] = findMoments(reinforcement, section, materials, Pns, c);
