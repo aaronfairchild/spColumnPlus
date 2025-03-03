@@ -68,8 +68,6 @@ for j = 1:nC
     num_iterations = num_iterations + 1;
 end
 
-
-
 % If failed to converge, display warning
 if num_iterations >= max_iterations
     %warning('Failed to converge to target axial load within %d iterations.', max_iterations);
@@ -89,7 +87,7 @@ beta1 = materials.beta1;  % Extract beta1 for Whitney stress block
 a = c*beta1;
 
 % Get concrete polygons in compression for current c, using the Whitney stress block
-polys = findPolys(section, c, beta1);  % Pass beta1 as third argument
+polys = findPolys(section, a);  % Use 'a' instead of 'c' for compression zone
 
 % Calculate concrete contribution to axial capacity
 Pnc = 0;
@@ -99,7 +97,7 @@ if ~isempty(polys)
         compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
 
         % Calculate area of the polygon
-        CArea = area(compPoly); % Fix: Use actual compression area
+        CArea = area(compPoly);
 
         % Add contribution to concrete axial capacity
         Pnc = Pnc + 0.85 * fc * CArea;
@@ -114,13 +112,13 @@ for i = 1:length(reinforcement.x)
     y_bar = reinforcement.y(i);
 
     % Calculate strain in steel
-    strain = epsilon_cu * (c - y_bar) / c; % Fix: Proper strain calculation
+    strain = epsilon_cu * (c - (y_max - y_bar)) / c; % Proper strain calculation
 
     % Calculate stress (limited by yield)
     stress = min(max(strain * Es, -fy), fy);
 
     % Add contribution to steel axial capacity
-    if y_bar > y_max - a
+    if y_bar > (y_max - a)
         Pns(i) = (stress - 0.85*fc)* reinforcement.area(i,1);
     else
         Pns(i) = stress * reinforcement.area(i,1);

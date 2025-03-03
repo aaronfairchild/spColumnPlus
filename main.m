@@ -1,7 +1,7 @@
 clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 % Main calling function for Column Analysis
 % Original Date: 3/1/2025
-% Latest Update: 3/2/2025 (Modified to measure c from top)
+% Latest Update: 3/3/2025 (Modified to use updated moment calculation method)
 
 % Initialize arrays to store results
 Mx = []; My = [];
@@ -22,11 +22,12 @@ for i = 1:length(theta_range)
     Pn_values(i) = Pn;
     
     % Draw the section with neutral axis and compression zone
-    polys = findPolys(section, c, materials.beta1);
+    a = materials.beta1 * c; % Calculate compression block depth
+    polys = findPolys(section, a); % Use a instead of c for compression block
     drawSection(section, reinforcement, c, polys);
-    title(sprintf('Rotation: %.0f degrees, c = %.2f', rad2deg(theta), c));
+    title(sprintf('Rotation: %.0f degrees, c = %.2f, a = %.2f', rad2deg(theta), c, a));
 
-    % find moments
+    % find moments using updated method
     [Mnx,Mny] = findMoments(reinforcement, section, materials, Pns, c);
 
     % Store results with appropriate scaling
@@ -36,6 +37,7 @@ for i = 1:length(theta_range)
     % Print results for this angle
     fprintf('Rotation: %.0f degrees\n', rad2deg(theta));
     fprintf('Neutral axis depth (c): %.2f in\n', c);
+    fprintf('Compression block depth (a): %.2f in\n', a);
     fprintf('Axial capacity (Pn): %.2f kips\n', Pn);
     fprintf('Moment capacity (Mnx): %.3f k-ft (scaled: %.3f)\n', Mnx/12, Mnx/12/35000);
     fprintf('Moment capacity (Mny): %.3f k-ft (scaled: %.3f)\n\n', Mny/12, Mny/12/35000);
