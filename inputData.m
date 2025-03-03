@@ -155,7 +155,7 @@ analysis.end_angle = 360;       % End angle for rotation (degrees)
 analysis.angle_increment = 45;  % Angle increment (degrees)
 analysis.start_c = -300;
 analysis.end_c = 300;
-analysis.P_tolerance = .01;
+analysis.P_tolerance = 1e-3;
 
 %% Display summary of inputs (DO NOT MODIFY THIS SECTION)
 display_summary(section, materials, reinforcement, analysis);

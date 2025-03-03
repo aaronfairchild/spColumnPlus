@@ -11,9 +11,10 @@ for i=1:length(polys)
     poly = polyshape(polys{i}(:,1),polys{i}(:,2));
     CArea = area(poly);
     [Ccx, Ccy] = centroid(poly);
-    Pnc = Pnc + 0.85*materials.fc*CArea; % concrete force
-    Mnyc = Mnyc + Pnc * (Ccx - xpc); % Conc moment about y
-    Mnxc = Mnxc + Pnc * (Ccy - ypc); % Conc moment about x
+    currentForce = 0.85*materials.fc*CArea; % concrete force for this polygon
+    Pnc = Pnc + currentForce;
+    Mnyc = Mnyc + currentForce * (Ccx - xpc); % Moment about y for this polygon
+    Mnxc = Mnxc + currentForce * (Ccy - ypc); % Moment about x for this polygon
 end
 
 % find moment contribution from steel
@@ -28,3 +29,4 @@ end
 % Conc + Steel
 Mny = sum(Mnys) + Mnyc;
 Mnx = sum(Mnxs) + Mnxc;
+end

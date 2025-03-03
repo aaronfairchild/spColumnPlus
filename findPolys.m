@@ -2,31 +2,33 @@ function polys = findPolys(section, c)
 % FINDPOLYS - Creates polygons representing the compression zone
 %
 % This function creates polygons representing the portions of a concrete
-% section that lie above a horizontal line y=c (compression zone)
+% section that lie above a horizontal line measured from the top of the section
 %
 % Inputs:
 %   section - Structure containing concrete section geometry
 %             Must have field 'vertices' with [x, y] coordinates
-%   c - The y-coordinate of the horizontal line (neutral axis)
+%   c - The depth of neutral axis from extreme compression fiber (top)
 %
 % Outputs:
 %   polys - Cell array of polygons, each represented as an array of [x,y] vertices
-%
-% Example usage:
-%   [section, ~, ~, ~] = inputData();
-%   polys = findPolys(section, 100);
+
+% Find the extreme compression fiber (maximum y-coordinate)
+y_max = max(section.vertices(:,2));
+
+% Calculate actual y-coordinate for neutral axis line
+na_line = y_max - c;
 
 % Create a polyshape from the section vertices
 sectionPoly = polyshape(section.vertices(:,1), section.vertices(:,2));
 
-% Create a very large rectangle representing the half-plane above y=c
+% Create a very large rectangle representing the half-plane above the neutral axis
 % Get the bounds of the section to determine appropriate size for the rectangle
 xmin = min(section.vertices(:,1)) - 100;
 xmax = max(section.vertices(:,1)) + 100;
-ymin = c;
-ymax = max(section.vertices(:,2)) + 100;
+ymin = na_line;  % This is the neutral axis line
+ymax = y_max + 100;  % Extend well above the section
 
-% Create a rectangle representing the half-plane above y=c
+% Create a rectangle representing the half-plane above na_line
 clipPoly = polyshape([xmin, xmax, xmax, xmin], [ymin, ymin, ymax, ymax]);
 
 % Intersect the section with the half-plane to get the compression zone

@@ -9,7 +9,7 @@ function drawSection(section, reinforcement, c, polys)
 %             Must have field 'vertices' with [x, y] coordinates
 %   reinforcement - Structure containing reinforcement details
 %                   Must have fields 'x', 'y', and 'area' with bar information
-%   c - The y-coordinate of the neutral axis (optional)
+%   c - The depth of neutral axis from top of section (optional)
 %   polys - Cell array of polygons representing compression zone (optional)
 %
 % Example usage:
@@ -75,15 +75,21 @@ end
 
 % Draw neutral axis line if c is provided
 if ~isempty(c)
+    % Find the extreme compression fiber (maximum y-coordinate)
+    y_max = max(section.vertices(:,2));
+    
+    % Calculate actual y-coordinate for neutral axis line
+    na_line = y_max - c;
+    
     % Determine the x-range for the neutral axis line
     x_min = min(section.vertices(:,1)) - 15;
     x_max = max(section.vertices(:,1)) + 15;
     
-    % Plot horizontal line at y = c
-    plot([x_min, x_max], [c, c], 'r--', 'LineWidth', 2);
+    % Plot horizontal line at y = na_line
+    plot([x_min, x_max], [na_line, na_line], 'r--', 'LineWidth', 2);
     
     % Add text label for the neutral axis
-    text(x_max - 5, c + 5, ['c = ' num2str(c, '%.2f')], 'Color', 'r', 'FontSize', 10, ...
+    text(x_max - 5, na_line + 5, ['c = ' num2str(c, '%.2f')], 'Color', 'r', 'FontSize', 10, ...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
 end
 
