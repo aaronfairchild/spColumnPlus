@@ -22,7 +22,7 @@ for i = 1:length(theta_range)
     Pn_values(i) = Pn;
     
     % Draw the section with neutral axis and compression zone
-    polys = findPolys(section, c);
+    polys = findPolys(section, c, materials.beta1);
     drawSection(section, reinforcement, c, polys);
     title(sprintf('Rotation: %.0f degrees, c = %.2f', rad2deg(theta), c));
 

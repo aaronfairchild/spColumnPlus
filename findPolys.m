@@ -1,4 +1,4 @@
-function polys = findPolys(section, c)
+function polys = findPolys(section, c, beta1)
 % FINDPOLYS - Creates polygons representing the compression zone
 %
 % This function creates polygons representing the portions of a concrete
@@ -15,6 +15,7 @@ function polys = findPolys(section, c)
 % Find the extreme compression fiber (maximum y-coordinate)
 y_max = max(section.vertices(:,2));
 
+a = beta1*c;
 % Calculate actual y-coordinate for neutral axis line
 na_line = y_max - c;
 
@@ -25,7 +26,7 @@ sectionPoly = polyshape(section.vertices(:,1), section.vertices(:,2));
 % Get the bounds of the section to determine appropriate size for the rectangle
 xmin = min(section.vertices(:,1)) - 100;
 xmax = max(section.vertices(:,1)) + 100;
-ymin = na_line;  % This is the neutral axis line
+ymin = y_max - a;  % This is the neutral axis line
 ymax = y_max + 100;  % Extend well above the section
 
 % Create a rectangle representing the half-plane above na_line

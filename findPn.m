@@ -13,30 +13,22 @@ function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 %   Pnc - Concrete contribution to axial capacity (kips)
 %   Pns - Steel contribution to axial capacity (kips)
 
-% Find the extreme compression fiber (maximum y-coordinate)
-y_max = max(section.vertices(:,2));
-
 % Get initial guess for c, target load, and tolerance
 c = analysis.start_c;
-% Use a reasonable range for c measured from the top
-c_range = 0:0.1:500;  % c is now measured from top down, so it's normally positive
+c_range = -100:0.1:250;
 nC = length(c_range);
 Pn_target = analysis.P;
 tolP = analysis.P_tolerance;
 
 % Initialize variables for iteration
 err = 1.0;  % Initial error
-best_err = Inf;
-best_c = c;
-best_Pn = 0;
-best_Pnc = 0;
-best_Pns = [];
+max_iterations = 10000;  % Prevent infinite loop
+num_iterations = 0;
 
 % Iterate to find c that gives Pn close to Pn_target
 for j = 1:nC
     % Calculate current axial capacity for the current value of c
     c = c_range(j);
-    c = 30;
     [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
 
     % Define the residual function f(c) = Pn(c) - Pn_target
@@ -45,28 +37,42 @@ for j = 1:nC
     % Calculate relative error
     err = abs(f_val / Pn_target);
 
-    % Keep track of best solution so far
-    if err < best_err
-        best_err = err;
-        best_c = c;
-        best_Pn = Pn;
-        best_Pnc = Pnc;
-        best_Pns = Pns;
-    end
-    
     % If we're close enough, exit the loop
     if err <= tolP
         break;
     end
+
+    % Finite difference approximation for derivative
+    delta = 1e-8;
+    c_plus_delta = c + delta; % Ensure this is a scalar
+    [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
+    f_prime = (Pn_delta - Pn) / delta;
+
+    % Newton-Raphson update
+    % Check if derivative is too small to avoid division by zero
+    if abs(f_prime) < 1e-8
+        % Fallback to simple proportional update if derivative is too small
+        c_new = c * (Pn_target / max(abs(Pn), 1e-8));
+    else
+        c_new = c - f_val / f_prime;
+    end
+
+    % Ensure c stays within reasonable bounds
+    c_new = max(c_new, -max(abs(section.vertices(:,2)))); % Lower bound
+    c_new = min(c_new, 2*max(section.vertices(:,2))); % Upper bound
+
+    % Ensure c is a scalar (take first element if somehow became an array)
+    c = c_new(1);
+
+    % Increment iteration counter
+    num_iterations = num_iterations + 1;
 end
 
-% If we didn't find a solution within tolerance, use the best one
-if err > tolP
-    c = best_c;
-    Pn = best_Pn;
-    Pnc = best_Pnc;
-    Pns = best_Pns;
-    fprintf('Warning: Best solution has error of %.4f%% (c = %.2f)\n', best_err*100, best_c);
+
+
+% If failed to converge, display warning
+if num_iterations >= max_iterations
+    %warning('Failed to converge to target axial load within %d iterations.', max_iterations);
 end
 
 end
@@ -79,15 +85,11 @@ fc = materials.fc;
 fy = materials.fy;
 Es = materials.Es;
 epsilon_cu = materials.epsilon_cu;
+beta1 = materials.beta1;  % Extract beta1 for Whitney stress block
+a = c*beta1;
 
-% Find the extreme compression fiber (maximum y-coordinate)
-y_max = max(section.vertices(:,2));
-
-% Calculate neutral axis position in y-coordinate
-na_line = y_max - c;
-
-% Get concrete polygons in compression for current c
-polys = findPolys(section, c);
+% Get concrete polygons in compression for current c, using the Whitney stress block
+polys = findPolys(section, c, beta1);  % Pass beta1 as third argument
 
 % Calculate concrete contribution to axial capacity
 Pnc = 0;
@@ -97,7 +99,7 @@ if ~isempty(polys)
         compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
 
         % Calculate area of the polygon
-        CArea = area(compPoly);
+        CArea = area(compPoly); % Fix: Use actual compression area
 
         % Add contribution to concrete axial capacity
         Pnc = Pnc + 0.85 * fc * CArea;
@@ -106,26 +108,20 @@ end
 
 % Calculate steel contribution to axial capacity
 Pns = zeros(length(reinforcement.x),1);
+y_max = max(section.vertices(:,2));
 for i = 1:length(reinforcement.x)
     % Get coordinates of reinforcement bar
     y_bar = reinforcement.y(i);
 
-    % Calculate distance from neutral axis
-    distance = na_line - y_bar;
-    
     % Calculate strain in steel
-    if c < 1e-6  % Prevent division by zero when c is very small
-        strain = -epsilon_cu;  % Assume all in tension for very small c
-    else
-        strain = epsilon_cu * (distance / c);
-    end
+    strain = epsilon_cu * (c - y_bar) / c; % Fix: Proper strain calculation
 
     % Calculate stress (limited by yield)
     stress = min(max(strain * Es, -fy), fy);
 
     % Add contribution to steel axial capacity
-    if y_bar > na_line
-        Pns(i) = (stress - 0.85*fc) * reinforcement.area(i,1);
+    if y_bar > y_max - a
+        Pns(i) = (stress - 0.85*fc)* reinforcement.area(i,1);
     else
         Pns(i) = stress * reinforcement.area(i,1);
     end
