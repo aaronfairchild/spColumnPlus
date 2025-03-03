@@ -36,7 +36,6 @@ for j = 1:nC
 
     % Calculate relative error
     err = abs(f_val / Pn_target);
-    fprintf('j:    %i, err = %5.6f\n',j,err);
 
     % If we're close enough, exit the loop
     if err <= tolP
