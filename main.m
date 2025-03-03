@@ -3,8 +3,6 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 % Original Date: 3/1/2025
 % Latest Update: 3/1/2025
 
-
-
 theta_range = deg2rad(0:45:360);
 for i = 1:length(theta_range)
 theta = theta_range(i)
