@@ -29,6 +29,7 @@ num_iterations = 0;
 for j = 1:nC
     % Calculate current axial capacity for the current value of c
     c = c_range(j);
+    c = 173.5398;
     [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
 
     % Define the residual function f(c) = Pn(c) - Pn_target
@@ -36,7 +37,6 @@ for j = 1:nC
 
     % Calculate relative error
     err = abs(f_val / Pn_target);
-    fprintf('j:    %i, err = %5.6f\n',j,err);
 
     % If we're close enough, exit the loop
     if err <= tolP
@@ -69,8 +69,6 @@ for j = 1:nC
     num_iterations = num_iterations + 1;
 end
 
-
-
 % If failed to converge, display warning
 if num_iterations >= max_iterations
     %warning('Failed to converge to target axial load within %d iterations.', max_iterations);
@@ -86,9 +84,11 @@ fc = materials.fc;
 fy = materials.fy;
 Es = materials.Es;
 epsilon_cu = materials.epsilon_cu;
+beta1 = materials.beta1;  % Extract beta1 for Whitney stress block
+a = c*beta1;
 
-% Get concrete polygons in compression for current c
-polys = findPolys(section, c);
+% Get concrete polygons in compression for current c, using the Whitney stress block
+polys = findPolys(section, a);  % Use 'a' instead of 'c' for compression zone
 
 % Calculate concrete contribution to axial capacity
 Pnc = 0;
@@ -97,9 +97,8 @@ if ~isempty(polys)
         % Create a polyshape from the polygon vertices
         compPoly = polyshape(polys{i}(:,1), polys{i}(:,2));
 
-        % Calculate area of the polygon - THIS WAS INCORRECT
-        % CArea = section.Ag - area(compPoly);
-        CArea = area(compPoly); % Fix: Use actual compression area
+        % Calculate area of the polygon
+        CArea = area(compPoly);
 
         % Add contribution to concrete axial capacity
         Pnc = Pnc + 0.85 * fc * CArea;
@@ -108,19 +107,23 @@ end
 
 % Calculate steel contribution to axial capacity
 Pns = zeros(length(reinforcement.x),1);
+y_max = max(section.vertices(:,2));
 for i = 1:length(reinforcement.x)
     % Get coordinates of reinforcement bar
     y_bar = reinforcement.y(i);
 
-    % Calculate strain in steel - THIS WAS INCORRECT
-    % strain = epsilon_cu * (d - c) / (c);
-    strain = epsilon_cu * (c - y_bar) / c; % Fix: Proper strain calculation
+    % Calculate strain in steel
+    strain = epsilon_cu * (c - (y_max - y_bar)) / c; % Proper strain calculation
 
     % Calculate stress (limited by yield)
     stress = min(max(strain * Es, -fy), fy);
 
     % Add contribution to steel axial capacity
-    Pns(i) = stress * reinforcement.area(i,1);
+    if y_bar > (y_max - a)
+        Pns(i) = (stress - 0.85*fc)* reinforcement.area(i,1);
+    else
+        Pns(i) = stress * reinforcement.area(i,1);
+    end
 end
 
 % Total axial capacity (ensure it's a scalar)

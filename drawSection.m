@@ -9,13 +9,14 @@ function drawSection(section, reinforcement, c, polys)
 %             Must have field 'vertices' with [x, y] coordinates
 %   reinforcement - Structure containing reinforcement details
 %                   Must have fields 'x', 'y', and 'area' with bar information
-%   c - The y-coordinate of the neutral axis (optional)
+%   c - The depth of neutral axis from top of section (optional)
 %   polys - Cell array of polygons representing compression zone (optional)
 %
 % Example usage:
 %   [section, materials, reinforcement, analysis] = inputData();
 %   [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
-%   polys = findPolys(section, c);
+%   a = materials.beta1 * c;
+%   polys = findPolys(section, a, materials.beta1);
 %   drawSection(section, reinforcement, c, polys);
 
 % Make c and polys optional parameters
@@ -58,6 +59,7 @@ end
 bar_diameters = 2 * sqrt(reinforcement.area / pi);
 
 % Plot each reinforcement bar
+y_max = max(section.vertices(:,2));
 for i = 1:length(reinforcement.x)
     % Draw filled circle for each reinforcement bar
     x = reinforcement.x(i);
@@ -69,22 +71,40 @@ for i = 1:length(reinforcement.x)
     x_circle = x + (d/2) * cos(theta);
     y_circle = y + (d/2) * sin(theta);
     
-    % Plot filled circle for reinforcement
-    fill(x_circle, y_circle, 'k', 'EdgeColor', 'k');
+    % Determine color based on position relative to neutral axis
+    if y > (y_max - c) % Bar in compression zone
+        fill(x_circle, y_circle, [0, 0, 0.8], 'EdgeColor', 'k');
+    else % Bar in tension zone
+        fill(x_circle, y_circle, [0.8, 0, 0], 'EdgeColor', 'k');
+    end
 end
 
 % Draw neutral axis line if c is provided
 if ~isempty(c)
+    % Find the extreme compression fiber (maximum y-coordinate)
+    y_max = max(section.vertices(:,2));
+    
+    % Calculate actual y-coordinate for neutral axis line
+    na_line = y_max - c;
+    
     % Determine the x-range for the neutral axis line
     x_min = min(section.vertices(:,1)) - 15;
     x_max = max(section.vertices(:,1)) + 15;
     
-    % Plot horizontal line at y = c
-    plot([x_min, x_max], [c, c], 'r--', 'LineWidth', 2);
+    % Plot horizontal line at y = na_line
+    plot([x_min, x_max], [na_line, na_line], 'r--', 'LineWidth', 2);
     
     % Add text label for the neutral axis
-    text(x_max - 5, c + 5, ['c = ' num2str(c, '%.2f')], 'Color', 'r', 'FontSize', 10, ...
+    text(x_max - 5, na_line + 5, ['c = ' num2str(c, '%.2f')], 'Color', 'r', 'FontSize', 10, ...
         'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+    
+    % Add compression block boundary line (a = beta1 * c)
+    if ~isempty(polys)
+        a_line = y_max - min([poly_y(:); y_max]);
+        plot([x_min, x_max], [y_max - a_line, y_max - a_line], 'b:', 'LineWidth', 2);
+        text(x_max - 5, y_max - a_line - 5, ['a ≈ ' num2str(a_line, '%.2f')], 'Color', 'b', 'FontSize', 10, ...
+            'HorizontalAlignment', 'right', 'VerticalAlignment', 'top');
+    end
 end
 
 % Set equal aspect ratio to avoid distortion
@@ -113,4 +133,8 @@ if ~isempty(section.centroid)
     plot(pc(1), pc(2), 'ko', 'MarkerFaceColor', 'k');
     text(pc(1) + 2, pc(2) + 2, 'PC', 'FontSize', 10);
 end
+
+% Add legend
+legend_entries = {'Concrete Section', 'Compression Zone', 'Compression Steel', 'Tension Steel', 'Neutral Axis', 'Compression Block', 'Plastic Centroid'};
+legend(legend_entries, 'Location', 'best');
 end
