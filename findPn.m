@@ -29,6 +29,7 @@ num_iterations = 0;
 for j = 1:nC
     % Calculate current axial capacity for the current value of c
     c = c_range(j);
+    c = 173.5398;
     [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
 
     % Define the residual function f(c) = Pn(c) - Pn_target
