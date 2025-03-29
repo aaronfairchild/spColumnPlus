@@ -26,7 +26,7 @@ sectionPoly = polyshape(section.vertices(:,1), section.vertices(:,2));
 
 % Create a very large rectangle representing the half-plane above the cut line
 % Get the bounds of the section to determine appropriate size for the rectangle
-xmin = min(section.vertices(:,1)) - 100;
+xmin = min(section.vertices(:,1)) - 200;
 xmax = max(section.vertices(:,1)) + 100;
 ymin = cut_line;  % This is the cut line
 ymax = y_max + 100;  % Extend well above the section
