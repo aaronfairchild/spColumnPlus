@@ -1,4 +1,4 @@
-function [c, Pn, Mnx, Mny, Pns] = findNeutralAxis(Pn_target, section, materials, reinforcement)
+function [c, Pn, Mnx, Mny, Pns] = findNeutralAxis(Pn_target, section, materials, reinforcement, theta)
 % FINDNEUTRALAXIS - Finds the neutral axis depth for a target axial load using fzero
 %
 % Inputs:
@@ -15,7 +15,7 @@ function [c, Pn, Mnx, Mny, Pns] = findNeutralAxis(Pn_target, section, materials,
 %   Pns - Steel contribution to axial capacity (kips) as an array
 
 % Define the objective function
-objFun = @(c) getPnDifference(c, Pn_target, section, materials, reinforcement);
+objFun = @(c) getPnDifference(c, Pn_target, section, materials, reinforcement, theta);
 
 % Set options for fzero
 options = optimset('Display', 'off');
@@ -66,11 +66,11 @@ catch
 end
 
 % Calculate the corresponding axial capacity and moments
-[Pn, Mnx, Mny, ~, Pns] = computeSectionCapacity(c, section, materials, reinforcement);
+[Pn, Mnx, Mny, ~, Pns] = computeSectionCapacity(c, section, materials, reinforcement, theta);
 end
 
-function diff = getPnDifference(c, Pn_target, section, materials, reinforcement)
+function diff = getPnDifference(c, Pn_target, section, materials, reinforcement, theta)
 % Helper function to get the difference between calculated and target axial loads
-[Pn, ~, ~] = computeSectionCapacity(c, section, materials, reinforcement);
+[Pn, ~, ~] = computeSectionCapacity(c, section, materials, reinforcement, theta);
 diff = Pn - Pn_target;
 end

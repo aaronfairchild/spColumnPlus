@@ -1,4 +1,4 @@
-function [Pn, Mnx, Mny, Pnc, Pns] = computeSectionCapacity(c, section, materials, reinforcement)
+function [Pn, Mnxg, Mnyg, Pnc, Pns] = computeSectionCapacity(c, section, materials, reinforcement,theta)
 % COMPUTESECTIONCAPACITY - Calculates axial capacity and moments for a given neutral axis depth
 %
 % Inputs:
@@ -70,7 +70,7 @@ for i = 1:length(reinforcement.x)
     
     % Add contribution to steel axial capacity
     if y_bar > (y_max - a)
-        Pns(i) = (stress - 0.85*fc) * reinforcement.area(i);
+        Pns(i) = (stress) * reinforcement.area(i);
     else
         Pns(i) = stress * reinforcement.area(i);
     end
@@ -83,10 +83,15 @@ end
 % Total axial capacity and moments
 Pn = Pnc + sum(Pns);
 Mnx = Mnxc + sum(Mnxs);
-Mny = Mnyc + sum(Mnys);
+Mny = Mnyc + sum(Mnys);     % -Mny
 
 % Ensure outputs are scalar
 Pn = Pn(1);
-Mnx = Mnx(1);
-Mny = Mny(1);
+
+Q =[cos(theta), -sin(theta);
+    sin(theta), cos(theta)];
+Mn = Q*[Mnx(1); Mny(1)];
+Mnxg = Mn(1);
+Mnyg = -Mn(2);
+
 end

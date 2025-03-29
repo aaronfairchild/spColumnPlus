@@ -41,7 +41,7 @@ for i = 1:num_angles
     [section, reinforcement] = rotateSection(theta, section, reinforcement);
     
     % Find the neutral axis depth for the target axial load
-    [c, ~, Mnx, Mny] = findNeutralAxis(Pn_target, section, materials, reinforcement);
+    [c, ~, Mnx, Mny] = findNeutralAxis(Pn_target, section, materials, reinforcement, theta);
     
     % Convert moments to ft-kips and normalize as in the original code
     Mx(i) = Mnx / 12;

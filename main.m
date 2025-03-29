@@ -16,9 +16,9 @@ Pn_values = 0:10000:60000;
 generateIsocontours(section, materials, reinforcement, Pn_values, 45);
 
 % Analyze and visualize a specific section at angle 0
-ihtheta = 0; % You can change this to any angle
+ihtheta = pi/4; % You can change this to any angle (in rad)
 [rotated_section, rotated_reinforcement] = rotateSection(ihtheta, section, reinforcement);
-[c, Pn, Mnx, Mny] = findNeutralAxis(analysis.P, rotated_section, materials, rotated_reinforcement);
+[c, Pn, Mnx, Mny] = findNeutralAxis(analysis.P, rotated_section, materials, rotated_reinforcement, ihtheta);
 visualizeSection(rotated_section, rotated_reinforcement, materials, c, Pn, Mnx, Mny);
 
 % Create a single interaction diagram for the current analysis load
