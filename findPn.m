@@ -1,6 +1,6 @@
 function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 % FINDPN - Calculates axial capacity of reinforced concrete section
-% and iterates to find neutral axis depth for target axial load
+% and uses MATLAB's built-in fzero to find neutral axis depth for target axial load
 %
 % Inputs:
 %   section - Structure containing concrete section geometry
@@ -12,68 +12,52 @@ function [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis)
 %   Pn - Total axial capacity (kips)
 %   Pnc - Concrete contribution to axial capacity (kips)
 %   Pns - Steel contribution to axial capacity (kips)
+%   c - Neutral axis depth (in)
 
-% Get initial guess for c, target load, and tolerance
-c = analysis.start_c;
-c_range = -100:0.1:250;
-nC = length(c_range);
+% Get target load
 Pn_target = analysis.P;
-tolP = analysis.P_tolerance;
 
-% Initialize variables for iteration
-err = 1.0;  % Initial error
-max_iterations = 10000;  % Prevent infinite loop
-num_iterations = 0;
+% Define the residual function: f(c) = Pn(c) - Pn_target
+residual_function = @(c_val) computePnResidual(section, materials, reinforcement, c_val, Pn_target);
 
-% Iterate to find c that gives Pn close to Pn_target
-for j = 1:nC
-    % Calculate current axial capacity for the current value of c
-    c = c_range(j);
-    %c = 173.5398;
-    [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
+% Set options for fzero
+options = optimset('Display', 'off', 'TolX', analysis.P_tolerance);
 
-    % Define the residual function f(c) = Pn(c) - Pn_target
-    f_val = Pn - Pn_target;
-
-    % Calculate relative error
-    err = abs(f_val / Pn_target);
-
-    % If we're close enough, exit the loop
-    if err <= tolP
-        break;
+% Try using fzero with various approaches
+try
+    % First try with a bracket, which is most reliable if we have a sign change
+    c = fzero(residual_function, [analysis.start_c, analysis.end_c], options);
+catch ME
+    % If that fails, try with an initial guess
+    warning('fzero with bracket failed: %s. Trying with initial guess.', ME.message);
+    try
+        c = fzero(residual_function, (analysis.start_c + analysis.end_c)/2, options);
+    catch ME2
+        % If all else fails, use a grid search
+        warning('fzero with initial guess failed: %s. Using grid search.', ME2.message);
+        
+        % Grid search approach
+        c_values = linspace(analysis.start_c, analysis.end_c, 1000);
+        residuals = zeros(size(c_values));
+        
+        for i = 1:length(c_values)
+            residuals(i) = residual_function(c_values(i));
+        end
+        
+        [~, idx] = min(abs(residuals));
+        c = c_values(idx);
     end
-
-    % Finite difference approximation for derivative
-    delta = 1e-8;
-    c_plus_delta = c + delta; % Ensure this is a scalar
-    [Pn_delta, ~, ~] = computePnFromC(section, materials, reinforcement, c_plus_delta);
-    f_prime = (Pn_delta - Pn) / delta;
-
-    % Newton-Raphson update
-    % Check if derivative is too small to avoid division by zero
-    if abs(f_prime) < 1e-8
-        % Fallback to simple proportional update if derivative is too small
-        c_new = c * (Pn_target / max(abs(Pn), 1e-8));
-    else
-        c_new = c - f_val / f_prime;
-    end
-
-    % Ensure c stays within reasonable bounds
-    c_new = max(c_new, -max(abs(section.vertices(:,2)))); % Lower bound
-    c_new = min(c_new, 2*max(section.vertices(:,2))); % Upper bound
-
-    % Ensure c is a scalar (take first element if somehow became an array)
-    c = c_new(1);
-
-    % Increment iteration counter
-    num_iterations = num_iterations + 1;
 end
 
-% If failed to converge, display warning
-if num_iterations >= max_iterations
-    %warning('Failed to converge to target axial load within %d iterations.', max_iterations);
+% Calculate final Pn, Pnc, and Pns using the found c value
+[Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c);
+
 end
 
+function residual = computePnResidual(section, materials, reinforcement, c, Pn_target)
+% Compute the residual for fzero
+[Pn, ~, ~] = computePnFromC(section, materials, reinforcement, c);
+residual = Pn - Pn_target;
 end
 
 function [Pn, Pnc, Pns] = computePnFromC(section, materials, reinforcement, c)
@@ -126,7 +110,7 @@ for i = 1:length(reinforcement.x)
     end
 end
 
-% Total axial capacity (ensure it's a scalar)
+% Total axial capacity
 Pn = Pnc + sum(Pns);
 
 % Ensure all outputs are scalar

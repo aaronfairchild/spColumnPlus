@@ -1,30 +1,35 @@
+% Main script for Column Analysis
+% Updated: March 29, 2025
 clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
-% Main calling function for Column Analysis
-% Original Date: 3/1/2025
-% Latest Update: 3/1/2025
 
-theta_range = deg2rad(0:45:360);
-for i = 1:length(theta_range)
-theta = theta_range(i);
+% Load input data
 [section, materials, reinforcement, analysis] = inputData();
 
-[xpc,ypc,section] = findCentroid(section, materials, reinforcement);
-section.centroid = [xpc,ypc];
+% Calculate the plastic centroid
+[xpc, ypc, section] = findCentroid(section, materials, reinforcement);
+section.centroid = [xpc, ypc];
 
-[section,reinforcement] = rotateSection(theta, section, reinforcement);
-drawSection(section, reinforcement);
+% Define Pn values for isocontours (can be customized)
+Pn_values = 0:10000:60000;
 
-% find correcet Pn
-[Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
+% Generate isocontours with 15 degree increments
+generateIsocontours(section, materials, reinforcement, Pn_values, 45);
 
-% find moments
-[Mnx,Mny] = findMoments(reinforcement, section, materials, Pns, c);
+% Analyze and visualize a specific section at angle 0
+ihtheta = 0; % You can change this to any angle
+[rotated_section, rotated_reinforcement] = rotateSection(ihtheta, section, reinforcement);
+[c, Pn, Mnx, Mny] = findNeutralAxis(analysis.P, rotated_section, materials, rotated_reinforcement);
+visualizeSection(rotated_section, rotated_reinforcement, materials, c, Pn, Mnx, Mny);
 
-Mx(i) = Mnx/12/35000;
-My(i) = Mny/12/35000;
-fprintf('Mnx:  %5.3f\n',Mnx/12/35000);
-fprintf('Mny:  %5.3f\n',Mny/12/35000);
-end
+% Create a single interaction diagram for the current analysis load
+fprintf('\nGenerating detailed interaction diagram for Pn = %.0f kips...\n', analysis.P);
+[Mx, My, angles] = generateInteractionDiagram(analysis.P, section, materials, reinforcement, 45);
 
-figure; grid on; hold on;
-plot(Mx,My,'o')
+% Plot the single interaction diagram
+figure('Color', 'white');
+plot(Mx, My, 'o-', 'LineWidth', 2, 'Color', 'b');
+grid on;
+title(sprintf('Interaction Diagram for P_n = %.0f kips', analysis.P), 'FontSize', 14);
+xlabel('M_x (ft-kips)', 'FontSize', 12);
+ylabel('M_y (ft-kips)', 'FontSize', 12);
+axis equal;
