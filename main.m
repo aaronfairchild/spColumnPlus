@@ -5,7 +5,7 @@ clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 
 theta_range = deg2rad(0:45:360);
 for i = 1:length(theta_range)
-theta = theta_range(i)
+theta = theta_range(i);
 [section, materials, reinforcement, analysis] = inputData();
 
 [xpc,ypc,section] = findCentroid(section, materials, reinforcement);
@@ -14,7 +14,7 @@ section.centroid = [xpc,ypc];
 [section,reinforcement] = rotateSection(theta, section, reinforcement);
 drawSection(section, reinforcement);
 
-% find correct Pn
+% find correcet Pn
 [Pn, Pnc, Pns, c] = findPn(section, materials, reinforcement, analysis);
 
 % find moments

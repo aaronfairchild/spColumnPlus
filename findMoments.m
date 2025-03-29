@@ -13,8 +13,8 @@ for i=1:length(polys)
     CArea = area(poly);
     [Ccx, Ccy] = centroid(poly);
     Pnc = Pnc + 0.85*materials.fc*CArea; % concrete force
-    Mnyc = Mnyc + Pnc * (Ccx - xpc); % Conc moment about y
-    Mnxc = Mnxc + Pnc * (Ccy - ypc); % Conc moment about x
+    Mnyc = Mnyc + Pnc * (xpc-Ccx/2); % Conc moment about y
+    Mnxc = Mnxc + Pnc * (ypc - Ccy/2); % Conc moment about x
 end
 
 % find moment contribution from steel
@@ -22,8 +22,8 @@ Nbars = length(reinforcement.x);
 Mnys = zeros(Nbars,1);
 Mnxs = zeros(Nbars,1);
 for i=1:Nbars
-    Mnxs(i) = Pns(i) * (reinforcement.y(i) - ypc);
-    Mnys(i) = Pns(i) * (reinforcement.x(i) - xpc);
+    Mnxs(i) = Pns(i) * (ypc - reinforcement.y(i));
+    Mnys(i) = Pns(i) * (xpc - reinforcement.x(i));
 end
 
 % Conc + Steel
