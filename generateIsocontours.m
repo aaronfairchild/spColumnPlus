@@ -12,9 +12,9 @@ function generateIsocontours(section, materials, reinforcement, Pn_values, angle
 figure('Color', 'white');
 hold on;
 grid on;
-xlabel('M_x (ft-kips / 35000)', 'FontSize', 12);
-ylabel('M_y (ft-kips / 35000)', 'FontSize', 12);
-title('Interaction Diagram (M_x vs M_y) for Different P_n Values', 'FontSize', 14);
+xlabel('$M_x$ (kip-ft)', 'FontSize', 12);
+ylabel('$M_y$ (kip-ft)', 'FontSize', 12);
+title('Interaction Diagram ($M_x$ vs $M_y$) for Different $P_n$ Values', 'FontSize', 14);
 
 % Generate and plot interaction diagrams for each Pn value
 legend_entries = cell(1, length(Pn_values));
@@ -35,7 +35,7 @@ for i = 1:length(Pn_values)
     plot(Mx, My, 'o-', 'LineWidth', 1.5, 'Color', colors(i,:));
     
     % Add to legend entries
-    legend_entries{i} = sprintf('P_n = %.0f kips', Pn);
+    legend_entries{i} = sprintf('$P_n = $%.0f kips', Pn);
 end
 
 % Add legend

@@ -19,11 +19,11 @@ polys = findPolys(section, a);
 % Visualize the section
 drawSection(section, reinforcement, c, polys);
 
-% Calculate normalized moments
-Mx_norm = Mnx / 12 / 35000;
-My_norm = Mny / 12 / 35000;
+% Calculate moments
+Mx_norm = Mnx / 12;
+My_norm = Mny / 12;
 
 % Add additional information to the plot
-title(sprintf('Section Analysis: P_n = %.0f kips, M_x = %.5f, M_y = %.5f (normalized)', ...
+title(sprintf('$P_n$ = %.0f kips, $M_x$ = %.0f, $M_y$ = %.0f', ...
     Pn, Mx_norm, My_norm), 'FontSize', 12);
 end

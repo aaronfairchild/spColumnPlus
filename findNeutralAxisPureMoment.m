@@ -26,7 +26,7 @@ section_height = y_max - y_min;
 
 % Define a range of c values to test
 % For pure moment, c is typically around section height/2
-c_values = linspace(0.005*section_height, 0.99*section_height, 5000);
+c_values = linspace(0.001*section_height, 0.99*section_height, 500);
 
 % Initialize arrays for results
 Pn_values = zeros(size(c_values));

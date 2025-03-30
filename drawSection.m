@@ -102,7 +102,7 @@ if ~isempty(c)
     if ~isempty(polys)
         a_line = y_max - min([poly_y(:); y_max]);
         plot([x_min, x_max], [y_max - a_line, y_max - a_line], 'b:', 'LineWidth', 2);
-        text(x_max - 5, y_max - a_line - 5, ['a ≈ ' num2str(a_line, '%.2f')], 'Color', 'b', 'FontSize', 10, ...
+        text(x_max - 5, y_max - a_line - 5, ['$a \approx$ ' num2str(a_line, '%.2f')], 'Color', 'b', 'FontSize', 10, ...
             'HorizontalAlignment', 'right', 'VerticalAlignment', 'top');
     end
 end
@@ -133,8 +133,4 @@ if ~isempty(section.centroid)
     plot(pc(1), pc(2), 'ko', 'MarkerFaceColor', 'k');
     text(pc(1) + 2, pc(2) + 2, 'PC', 'FontSize', 10);
 end
-
-% Add legend
-legend_entries = {'Concrete Section', 'Compression Zone', 'Compression Steel', 'Tension Steel', 'Neutral Axis', 'Compression Block', 'Plastic Centroid'};
-legend(legend_entries, 'Location', 'best');
 end
