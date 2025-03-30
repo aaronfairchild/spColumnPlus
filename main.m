@@ -32,4 +32,4 @@ grid on;
 title(sprintf('Interaction Diagram for P_n = %.0f kips', analysis.P), 'FontSize', 14);
 xlabel('M_x (ft-kips)', 'FontSize', 12);
 ylabel('M_y (ft-kips)', 'FontSize', 12);
-axis equal;
+axis equal; 
