@@ -32,7 +32,7 @@ for i = 1:length(Pn_values)
     [Mx, My, angles] = generateInteractionDiagram(Pn, section, materials, reinforcement, angle_increment);
     
     % Plot the interaction diagram
-    plot(Mx, My, 'o-', 'LineWidth', 1.5, 'Color', colors(i,:));
+    plot(Mx, My, '-', 'LineWidth', 1.5, 'Color', colors(i,:));
     
     % Add to legend entries
     legend_entries{i} = sprintf('$P_n = $%.0f kips', Pn);

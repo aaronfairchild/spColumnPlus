@@ -1,4 +1,4 @@
-function [Mx, My, angles] = generateInteractionDiagram(Pn_target, section, materials, reinforcement, angle_increment)
+function [Mx, My, angles, c_values] = generateInteractionDiagram(Pn_target, section, materials, reinforcement, angle_increment)
 % GENERATEINTERACTIONDIAGRAM - Generates an interaction diagram for a given axial load
 %
 % Inputs:
@@ -12,6 +12,7 @@ function [Mx, My, angles] = generateInteractionDiagram(Pn_target, section, mater
 %   Mx - Normalized moment about x-axis (ft-kips / 35000)
 %   My - Normalized moment about y-axis (ft-kips / 35000)
 %   angles - Angles used for the diagram (radians)
+%   c_values - Neutral axis depth values (inches)
 
 % Set default angle increment if not provided
 if nargin < 5
@@ -22,9 +23,10 @@ end
 angles = deg2rad(0:angle_increment:360);
 num_angles = length(angles);
 
-% Initialize arrays for moments
+% Initialize arrays for moments and c values
 Mx = zeros(1, num_angles);
 My = zeros(1, num_angles);
+c_values = zeros(1, num_angles);  % Add array to store c values
 
 % Store original section and reinforcement
 original_section = section;
@@ -42,6 +44,9 @@ for i = 1:num_angles
     
     % Find the neutral axis depth for the target axial load
     [c, ~, Mnx, Mny] = findNeutralAxis(Pn_target, section, materials, reinforcement, theta);
+    
+    % Store the c value
+    c_values(i) = c;
     
     % Convert moments to ft-kips and normalize as in the original code
     Mx(i) = Mnx / 12;
