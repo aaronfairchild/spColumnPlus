@@ -97,34 +97,7 @@ end
 % Storage for results of all angles (for combined plot)
 all_results = cell(num_angles, 1);
 
-% Determine P values systematically
-% First, estimate pure compression capacity
-try
-    % Use a very large value for c (all in compression)
-    y_max = max(section.vertices(:,2));
-    c_max = 3*y_max;
-    [P_max, ~, ~] = computeSectionCapacity(c_max, section, materials, reinforcement, 0);
-    fprintf('Pure compression capacity: %.0f kips\n', P_max);
-catch
-    % If that fails, use a default max value
-    P_max = 60000;
-    fprintf('Using default maximum P: %.0f kips\n', P_max);
-end
-
-% Try to estimate pure tension capacity
-try
-    % Estimate based on all steel yielding
-    As_total = sum(reinforcement.area);
-    P_min = -As_total * materials.fy; % Negative for tension
-    fprintf('Pure tension capacity (estimated): %.0f kips\n', P_min);
-catch
-    % If that fails, use a default min value
-    P_min = -5000;
-    fprintf('Using default minimum P: %.0f kips\n', P_min);
-end
-
-% Distribute points with more resolution near zero
-P_values = 0:10000:60000;
+P_values = 0:10000:60000;   % Set values of P
 num_P_points = length(P_values);
 
 % Iterate through angles
@@ -222,7 +195,7 @@ for a = 1:num_angles
     fclose(fid);
     fprintf('Saved data for angle %.0f° as %s\n', angles_deg(a), csv_filename);
     
- % Create individual plot for this angle
+    % Create individual plot for this angle
     fig_angle = figure('Name', sprintf('Meridian Plot for %.0f°', angles_deg(a)), 'Color', 'white');
     hold on; grid on;
 
@@ -245,7 +218,7 @@ for a = 1:num_angles
     legend(legendEntries, 'Location', 'best');
 
     svg_filename = fullfile(svg_dir, sprintf('meridian_plot_%.0fdeg.svg', angles_deg(a)));
-    drawnow;
+    drawnow; % make sure its all plotted
 
     % Save the figure referenced by fig_angle (which now contains the plot)
     saveas(fig_angle, svg_filename, 'svg');
