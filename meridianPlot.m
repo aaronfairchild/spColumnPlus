@@ -1,7 +1,4 @@
-% meridianPlot.m - Script to generate meridian plots for interaction surface
-% This script plots the relationship between axial capacity and moment 
-% capacities at fixed angles (P vs abs(
-% Mnx) and P vs -abs(Mny))
+% meridianPlot
 clear; clc; delete(findall(0, 'Type', 'figure')); % gets rid of all open figures
 
 baseFontSize = 22;
